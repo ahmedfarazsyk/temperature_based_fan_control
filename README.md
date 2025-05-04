@@ -1,7 +1,5 @@
 # Automatic Temperature-Based Fan Control System
 
-![System Block Diagram](https://via.placeholder.com/800x400?text=System+Block+Diagram) <!-- Replace with actual image -->
-
 ## Table of Contents
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
@@ -33,34 +31,34 @@ The system automatically adjusts fan speed based on ambient temperature, demonst
 - DC motor with transistor driver circuit
 
 ## Installation
-1. Clone the repository:
+### Clone the repository:
    ```bash
    git clone https://github.com/yourusername/temperature-based-fan-control.git
    cd temperature-based-fan-control
 
-2. For Keil µVision:
+### For Keil µVision:
 - Open firmware_keil_uvision/temperature_fan.uvproj
 - Build the project (F7 or Project → Build Target)
 - HEX file will be generated in firmware_keil_uvision/objects/
 
-3. For Proteus Simulation:
+### For Proteus Simulation:
 - Open schema_proteus/temperature_fan.pdsprj
 - Right-click AT89C52 → Edit Properties
 - Load the generated HEX file from firmware_keil_uvision/objects/
 - Set clock frequency to 12 MHz
 
 ## Usage
-1. Simulation Mode
+### Simulation Mode
 Run the Proteus simulation and adjust temperature using:
-+ button to increase temperature
-- button to decrease temperature
+- + button to increase temperature
+- - button to decrease temperature
 
-2. Observe:
+### Observe:
 - LCD display showing current temperature
 - PWM waveform on oscilloscope
 - Motor speed changes
 
-Temperature Control Logic
+### Temperature Control Logic
 - Temperature Range |	Fan State |	PWM Duty Cycle
 - < 25°C            |	OFF       |	0%
 - 25-30°C           |	Medium	  | 50%
@@ -69,13 +67,13 @@ Temperature Control Logic
 
 
 ## Technical Specifications
-1. Firmware Details
+### Firmware Details
 - Clock Frequency: 11.0592 MHz
 - PWM Resolution: 8-bit (software-implemented)
 - LCD Interface: 4-bit mode
 - ADC Resolution: 8-bit (via ADC0804)
 
-2. Schematic Components
+### Schematic Components
 - Microcontroller	(AT89C52):	11.0592 MHz
 - Temperature Sensor (LM35):	10mV/°C
 - LCD Display	(LM016L):	16x2 characters
