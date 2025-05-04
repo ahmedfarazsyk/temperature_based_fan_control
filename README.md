@@ -35,6 +35,7 @@ The system automatically adjusts fan speed based on ambient temperature, demonst
    ```bash
    git clone https://github.com/yourusername/temperature-based-fan-control.git
    cd temperature-based-fan-control
+```
 
 ### For Keil µVision:
 - Open firmware_keil_uvision/temperature_fan.uvproj
