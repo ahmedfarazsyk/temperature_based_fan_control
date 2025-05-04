@@ -33,7 +33,7 @@ The system automatically adjusts fan speed based on ambient temperature, demonst
 ## Installation
 ### Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/temperature-based-fan-control.git
+   git clone https://github.com/ahmedfarazsyk/temperature_based_fan_control.git
    cd temperature-based-fan-control
 ```
 
