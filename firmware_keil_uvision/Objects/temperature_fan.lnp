@@ -1,0 +1,4 @@
+".\Objects\START_AD.obj",
+".\Objects\temperature_fan.obj" 
+TO ".\Objects\temperature_fan" 
+PRINT(".\Listings\temperature_fan.m51") RAMSIZE(256) 

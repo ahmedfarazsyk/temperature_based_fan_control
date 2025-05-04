@@ -1,0 +1,198 @@
+C51 COMPILER V9.60.7.0   TEMPERATURE_FAN                                                   05/04/2025 12:06:27 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TEMPERATURE_FAN
+OBJECT MODULE PLACED IN .\Objects\temperature_fan.obj
+COMPILER INVOKED BY: D:\C51\BIN\C51.EXE temperature_fan.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\t
+                    -emperature_fan.lst) TABS(2) OBJECT(.\Objects\temperature_fan.obj)
+
+line level    source
+
+   1          #include <reg51.h> // Include register definition file for 8051 microcontroller
+   2          
+   3          // Define data and control port aliases
+   4          #define MYDATA P3     // Port 3 used to read ADC data
+   5          #define ldata P1      // Port 1 connected to LCD data lines
+   6          
+   7          // Define control pins using bit-addressable memory
+   8          sbit rd  = P2^5;      // ADC read control pin
+   9          sbit wr  = P2^4;      // ADC write control pin
+  10          sbit INTR = P2^3;     // ADC interrupt pin (signals conversion complete)
+  11          sbit rs  = P2^0;      // LCD Register Select (0: command, 1: data)
+  12          sbit rw  = P2^1;      // LCD Read/Write (0: write, 1: read)
+  13          sbit en  = P2^2;      // LCD Enable
+  14          sbit MTR = P2^6;      // Motor control pin (fan motor)
+  15          
+  16          // Delay function (approx. 1ms per unit)
+  17          void msDelay(unsigned int value) {
+  18   1          unsigned int x, y;
+  19   1          for(x = 0; x < value; x++)
+  20   1              for(y = 0; y < 1275; y++);
+  21   1      }
+  22          
+  23          // Send command to LCD
+  24          void lcdCmd(unsigned char value) {
+  25   1          ldata = value; // Put command on data lines
+  26   1          rs = 0;         // Select command register
+  27   1          rw = 0;         // Write operation
+  28   1          en = 1;         // Enable high
+  29   1          msDelay(5);     // Short delay
+  30   1          en = 0;         // Enable low (command latched)
+  31   1      }
+  32          
+  33          // Send character data to LCD
+  34          void lcdData(char value) {
+  35   1          ldata = value; // Put data on data lines
+  36   1          rs = 1;         // Select data register
+  37   1          rw = 0;         // Write operation
+  38   1          en = 1;
+  39   1          msDelay(5);
+  40   1          en = 0;
+  41   1      }
+  42          
+  43          // Initialize LCD with required commands
+  44          void lcdInit() {
+  45   1          lcdCmd(0x38); // 8-bit, 2-line display
+  46   1          lcdCmd(0x0C); // Display ON, Cursor OFF
+  47   1          lcdCmd(0x01); // Clear display
+  48   1          lcdCmd(0x80); // Move cursor to beginning
+  49   1      }
+  50          
+  51          // Display temperature value (2 digits + 'C') on LCD
+  52          void displayTemp(unsigned char value) {
+  53   1          char d1 = (value / 10) + '0'; // Tens digit
+  54   1          char d2 = (value % 10) + '0'; // Units digit
+C51 COMPILER V9.60.7.0   TEMPERATURE_FAN                                                   05/04/2025 12:06:27 PAGE 2   
+
+  55   1          lcdData(d1);
+  56   1          lcdData(d2);
+  57   1          lcdData('C');                // Display Celsius
+  58   1      }
+  59          
+  60          // Update only numeric temperature on display (without 'C')
+  61          void updateTemp(unsigned char value) {
+  62   1          char d1 = (value / 10) + '0';
+  63   1          char d2 = (value % 10) + '0';
+  64   1          lcdData(d1);
+  65   1          lcdData(d2);
+  66   1      }
+  67          
+  68          // Read value from ADC
+  69          unsigned char adcRead() {
+  70   1          unsigned char value;
+  71   1          wr = 0;        // Start ADC conversion
+  72   1          wr = 1;
+  73   1          while(INTR == 1); // Wait for conversion to complete (INTR low)
+  74   1          rd = 0;        // Enable ADC data output
+  75   1          value = MYDATA; // Read converted value
+  76   1          rd = 1;        // Disable data output
+  77   1          return value;
+  78   1      }
+  79          
+  80          // Main control loop: read temperature, display, and control fan
+  81          void motorcontrol() {
+  82   1          unsigned char i, value;
+  83   1          unsigned char tempMsg[] = "TEMP: ";
+  84   1          unsigned char fanOn[]   = "FAN ON ";
+  85   1          unsigned char fanOff[]  = "FAN OFF";
+  86   1      
+  87   1          while(1) {
+  88   2              value = adcRead(); // Read temperature value from ADC
+  89   2              
+  90   2              // Display "TEMP: " on first LCD line
+  91   2              lcdCmd(0x80);      // Move cursor to first line
+  92   2              for(i = 0; i < 6; i++) {
+  93   3                  lcdData(tempMsg[i]);
+  94   3              }
+  95   2              displayTemp(value); // Show temperature reading
+  96   2      
+  97   2              // Fan OFF: if temperature < 25°C
+  98   2              if(value < 25) {
+  99   3                  MTR = 1;            // Fan OFF (assuming active-low control)
+ 100   3                  lcdCmd(0xC0);       // Move to second line
+ 101   3                  for(i = 0; i < 7; i++) {
+ 102   4                      lcdData(fanOff[i]);
+ 103   4                  }
+ 104   3              }
+ 105   2      
+ 106   2              // Fan ON: temperature = 25°C
+ 107   2              else {
+ 108   3                  MTR = 0;            // Fan ON
+ 109   3                  lcdCmd(0xC0);       // Move to second line
+ 110   3                  for(i = 0; i < 7; i++) {
+ 111   4                      lcdData(fanOn[i]);
+ 112   4                  }
+ 113   3      
+ 114   3                  // Fan speed modulation: low speed
+ 115   3                  if(value >= 25 && value < 30) {
+ 116   4                      while(value >= 25 && value < 30) {
+C51 COMPILER V9.60.7.0   TEMPERATURE_FAN                                                   05/04/2025 12:06:27 PAGE 3   
+
+ 117   5                          MTR = 0; msDelay(50); // Fan ON
+ 118   5                          MTR = 1; msDelay(50); // Fan OFF
+ 119   5                          value = adcRead();
+ 120   5                          lcdCmd(0x86);         // Update temperature digits only
+ 121   5                          updateTemp(value);
+ 122   5                      }
+ 123   4                  }
+ 124   3      
+ 125   3                  // Medium speed
+ 126   3                  else if(value >= 30 && value < 35) {
+ 127   4                      while(value >= 30 && value < 35) {
+ 128   5                          MTR = 0; msDelay(75); // Longer ON
+ 129   5                          MTR = 1; msDelay(25); // Shorter OFF
+ 130   5                          value = adcRead();
+ 131   5                          lcdCmd(0x86);
+ 132   5                          updateTemp(value);
+ 133   5                      }
+ 134   4                  }
+ 135   3      
+ 136   3                  // Full speed
+ 137   3                  else if(value >= 35) {
+ 138   4                      while(value >= 35) {
+ 139   5                          MTR = 0;             // Constant ON
+ 140   5                          value = adcRead();
+ 141   5                          lcdCmd(0x86);
+ 142   5                          updateTemp(value);
+ 143   5                      }
+ 144   4                  }
+ 145   3              }
+ 146   2      
+ 147   2              msDelay(300); // Delay before next temperature check
+ 148   2          }
+ 149   1      }
+ 150          
+ 151          // Main function
+ 152          void main() {
+ 153   1          P0 = 0xFF;        // Set Port 0 as input (if needed)
+ 154   1          MYDATA = 0xFF;    // Set Port 3 as input for ADC
+ 155   1          INTR = 1;         // Prepare for ADC interrupt
+ 156   1          rd = 1; wr = 1;   // Default high for ADC control
+ 157   1          MTR = 1;          // Fan OFF initially
+ 158   1      
+ 159   1          lcdInit();        // Initialize LCD
+ 160   1      
+ 161   1          // Optional welcome message
+ 162   1          lcdCmd(0x80);
+ 163   1          lcdData('W'); lcdData('E'); lcdData('L'); lcdData('C'); lcdData('O'); lcdData('M'); lcdData('E');
+ 164   1          msDelay(100);
+ 165   1          lcdCmd(0x01);     // Clear screen
+ 166   1      
+ 167   1          motorcontrol();   // Start fan and temperature control loop
+ 168   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    503    ----
+   CONSTANT SIZE    =     23    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      25
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.7.0   TEMPERATURE_FAN                                                   05/04/2025 12:06:27 PAGE 4   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
